@@ -15,5 +15,6 @@ namespace Shop.DbContext
         public DbSet<UserDetails> UserDetails { get; set; }
         public DbSet<Cart> Cart { get; set; }
         public DbSet<PurchaseHistory> PurchaseHistory { get; set; }
+
     }
 }

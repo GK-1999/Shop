@@ -24,8 +24,8 @@ namespace Shop.Services.Implementations
 
         public Task<IdentityResult> CreateRole([FromBody] RoleModel model)
         {
-                var role = new IdentityRole { Name = model.Name};
-                var result =  _roleManager.CreateAsync(role);
+            var role = new IdentityRole { Name = model.Name};
+            var result =  _roleManager.CreateAsync(role);
             return result;
         }
     }
