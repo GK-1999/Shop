@@ -4,14 +4,13 @@ namespace Shop.Models.ViewModels
 {
     public class RegistrationModel
     {
-       
         [Required]
-        public string? UserName { get; set; }
+        public string UserName { get; set; }
         [Required]
         [EmailAddress]
-        public string? EmailId { get; set; }
+        public string EmailId { get; set; }
         [Required]
-        public string? Password { get; set; }
+        public string Password { get; set; }
         [Required]
         public string? FirstName { get; set; }
         [Required]
