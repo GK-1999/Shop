@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Shop.Models.Administration;
 using Shop.Services.Interfaces;
+using System.Collections;
+using System.Collections.Generic;
+using System.Xml.Linq;
 
 namespace Shop.Controllers
 {
@@ -22,8 +25,7 @@ namespace Shop.Controllers
             _administrator = administrator;
         }
 
-        [HttpPost("addRole")]
-        [Authorize("SuperAdmin")]
+        [HttpPost("createRole")]
         public async Task<IActionResult> CreateRole([FromBody] RoleModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -31,13 +33,13 @@ namespace Shop.Controllers
 
             if (await _roleManager.RoleExistsAsync(model.Name)) return BadRequest("Role Already Exists");
 
-            var result = _administrator.CreateRole(model.Name);
-            if (result.IsCompletedSuccessfully) return Ok("Role Created Sucessfully");
+            var result = await _administrator.CreateRole(model);
+            if (result.Succeeded) return Ok("Role Created Sucessfully");
 
             return BadRequest("Role Not Created");
         }
 
-
+        [HttpPost("AddUserToRole")]
         [Authorize("SuperAdmin")]
         public async Task<IActionResult> AddToRole(string userId, [FromBody] RoleModel model)
         {
@@ -53,5 +55,12 @@ namespace Shop.Controllers
 
             return Ok("Sucessfully Assigned Role To User");
         }
+
+        [HttpGet("GetRoles")]
+        public dynamic ViewRoles()
+        { 
+            return _roleManager.Roles.ToList();
+        }
+
     }
 }

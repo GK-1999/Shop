@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Shop.DbContext;
+using Shop.Models.DataModels;
 using Shop.Services.Implementations;
 using Shop.Services.Interfaces;
 using System.Security.Cryptography.X509Certificates;

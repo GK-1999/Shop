@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Shop.Models.Administration;
 using Shop.Services.Interfaces;
 using System.Data;
 using System.Xml.Linq;
@@ -17,14 +19,14 @@ namespace Shop.Services.Implementations
 
         public Task<IdentityResult> AddUserToRole(IdentityUser user, string name)
         {
-
             return _userManager.AddToRoleAsync(user, name);
         }
 
-        public Task<IdentityResult> CreateRole(string name)
+        public Task<IdentityResult> CreateRole([FromBody] RoleModel model)
         {
-                var role = new IdentityRole { Name = name };
-                return _roleManager.CreateAsync(role);
+                var role = new IdentityRole { Name = model.Name};
+                var result =  _roleManager.CreateAsync(role);
+            return result;
         }
     }
 }
