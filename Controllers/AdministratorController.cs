@@ -39,23 +39,6 @@ namespace Shop.Controllers
             return BadRequest("Role Not Created");
         }
 
-        [HttpPost("AddUserToRole")]
-        [Authorize("SuperAdmin")]
-        public async Task<IActionResult> AddToRole(string userId, [FromBody] RoleModel model)
-        {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return NotFound();
-
-            if (model.Name == null) return BadRequest("Role Not Specified");
-
-            var result = _administrator.AddUserToRole(user, model.Name);
-            if (!result.IsCompletedSuccessfully) return BadRequest("Assigning Role To User Failed");
-
-            return Ok("Sucessfully Assigned Role To User");
-        }
-
         [HttpGet("GetRoles")]
         public dynamic ViewRoles()
         { 
