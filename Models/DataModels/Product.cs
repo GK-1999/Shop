@@ -1,14 +1,22 @@
-﻿namespace Shop.Models.DataModels
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Shop.Models.DataModels
 {
     public class Product
     {
+        [Key]
         public int ProductId { get; set; }
-        public string Name { get; set; }
+        [Required]
+        public string? Name { get; set; }
         public string Description { get; set; }
-        public string Category { get; set; }
+        public string? Category { get; set; }
+        [Required]
+        [Column(TypeName = "decimal(10, 2)")]
         public double Price { get; set; }
-        public double Quantity { get; set;}
-        public bool Visiblity { get; set; }
-        public string UploadedBy { get; set; }
+        public int Quantity { get; set; } = 0;
+        public bool Visiblity { get; set; } = false;
+        [Required]
+        public string? UploadedBy { get; set; }
     }
 }
