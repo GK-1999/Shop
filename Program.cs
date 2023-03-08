@@ -9,9 +9,11 @@ using Shop.Services.Implementations;
 using Shop.Services.Interfaces;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using AutoMapper;
 
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // Add services to the container.
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(option =>
@@ -27,7 +29,7 @@ builder.Services.AddAuthentication(auth =>
     auth.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
-    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
@@ -47,6 +49,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ShopDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddScoped<IAdministratorServices, AdministratorServices>();
+builder.Services.AddScoped<IAccountServices, AccountServices>();
 
 var app = builder.Build();
 
