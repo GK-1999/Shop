@@ -8,6 +8,5 @@ namespace Shop.Services.Interfaces
     {
         Task<IdentityResult> CreateRole(RoleModel name);
         Task<IdentityResult> AddUserToRole(IdentityUser user, string role);
-
     }
 }

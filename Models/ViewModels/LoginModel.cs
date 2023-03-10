@@ -4,9 +4,8 @@ namespace Shop.Models.ViewModels
 {
     public class LoginModel
     {
-        [Required]
         public string? UserName { get; set; }
-        [Required]
+        public string? EmailId { get; set; }
         public string? Password { get; set; }
     }
 }
