@@ -16,7 +16,8 @@ namespace Shop.Services.Implementations
         private UserManager<IdentityUser> _userManager;
         private IConfiguration _configuration;
 
-        public AccountServices(UserManager<IdentityUser> userManager, IConfiguration configuration)
+        public AccountServices(UserManager<IdentityUser> userManager,
+                               IConfiguration configuration)
         {
             _userManager = userManager;
             _configuration = configuration;
@@ -48,39 +49,6 @@ namespace Shop.Services.Implementations
             return new response { Message = "Admin Registration Failed", StatusCode = 400 };
         }
 
-        public async Task<response> LoginAsync(LoginModel model)
-        {
-            var user = await _userManager.FindByNameAsync(model.UserName);
-            if (user == null) return new response { Message = "No Valid User Found with that UserName", StatusCode = 400};
-
-            var valid = await _userManager.CheckPasswordAsync(user, model.Password);
-            if (!valid) return new response { Message = "Invalid Password", StatusCode = 400 };
-            IList<string> roles = await _userManager.GetRolesAsync(user);
-            var claims = new[]{
-                new Claim("UserName" , model.UserName),
-                new Claim(ClaimTypes.NameIdentifier , user.Id)
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["AuthSettings:Key"]));
-            
-            var token = new JwtSecurityToken(
-                issuer: _configuration["AuthSettings:Issuer"],
-                audience: _configuration["AuthSettings:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
-                signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
-                );
-
-            string tokenAsString = new JwtSecurityTokenHandler().WriteToken(token);
-
-            return new response
-            {
-                Message = "Login Sucessful",
-                StatusCode = 200,
-                Data = new { token = tokenAsString ,UserRole = roles.FirstOrDefault() },
-            };
-        }
-
         public async Task<response> UserRegistrationAsync([FromBody] RegistrationModel model)
         {
             if (model == null) return new response { Message = "No Data Received", StatusCode = 400 };
@@ -110,7 +78,45 @@ namespace Shop.Services.Implementations
                 var Assignrole = await _userManager.AddToRoleAsync(IdentityUser, "User");
                 if (Assignrole.Succeeded) return new response { Message = "User Registration Sucessful", StatusCode = 200 };
             }
-            return new response { Message = "User Registration Failed", StatusCode = 400 };
+            return new response { Message = "User Registration Failed", StatusCode = 400, Data = new { Error = result.Errors } };
+        }
+
+        public async Task<response> LoginAsync(LoginModel model)
+        {
+            var user = await _userManager.FindByNameAsync(model.UserName);
+            if (user == null) return new response { Message = "No Valid User Found with that UserName", StatusCode = 400 };
+
+            var valid = await _userManager.CheckPasswordAsync(user, model.Password);
+            if (!valid) return new response { Message = "Invalid Password", StatusCode = 400 };
+            IList<string> roles = await _userManager.GetRolesAsync(user);
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, roles.FirstOrDefault())
+            };
+
+            var identity = new ClaimsIdentity(claims, "Login");
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["AuthSettings:Key"]));
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["AuthSettings:Issuer"],
+                audience: _configuration["AuthSettings:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+                );
+
+            string tokenAsString = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return new response
+            {
+                Message = "Details Verified",
+                StatusCode = 200,
+                Data = new { token = tokenAsString },
+            };
         }
     }
 }

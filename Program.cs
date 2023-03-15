@@ -1,16 +1,13 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Shop.DbContext;
-using Shop.Models.DataModels;
 using Shop.Services.Implementations;
 using Shop.Services.Interfaces;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using AutoMapper;
-
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -33,6 +30,7 @@ builder.Services.AddAuthentication(auth =>
     {
         ValidateIssuer = true,
         ValidateAudience = true,
+        ValidateLifetime= true,
         RequireExpirationTime = true,
         ValidIssuer = builder.Configuration["AuthSettings:Issuer"],
         ValidAudience = builder.Configuration["AuthSettings:Audience"],
@@ -40,6 +38,8 @@ builder.Services.AddAuthentication(auth =>
         ValidateIssuerSigningKey = true,
     };
 });
+
+builder.Services.AddScoped<ClaimsIdentity>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -59,10 +59,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
 
 app.MapControllers();
 
