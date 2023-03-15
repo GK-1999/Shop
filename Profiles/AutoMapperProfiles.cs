@@ -9,6 +9,7 @@ namespace Shop.Profiles
         public AutoMapperProfiles()
         {
             CreateMap<UserDetails, RegistrationModel>();
+            CreateMap<Product,UpdateProduct>();
         }
     }
 }
