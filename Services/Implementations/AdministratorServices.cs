@@ -17,11 +17,6 @@ namespace Shop.Services.Implementations
             _userManager = userManager;
         }
 
-        public Task<IdentityResult> AddUserToRole(IdentityUser user, string name)
-        {
-            return _userManager.AddToRoleAsync(user, name);
-        }
-
         public Task<IdentityResult> CreateRole([FromBody] RoleModel model)
         {
             var role = new IdentityRole { Name = model.Name};
