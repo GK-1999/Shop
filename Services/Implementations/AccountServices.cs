@@ -97,8 +97,6 @@ namespace Shop.Services.Implementations
                 new Claim(ClaimTypes.Role, roles.FirstOrDefault())
             };
 
-            var identity = new ClaimsIdentity(claims, "Login");
-
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["AuthSettings:Key"]));
 
             var token = new JwtSecurityToken(

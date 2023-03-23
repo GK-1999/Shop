@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Shop.Models.Administration;
 using Shop.Services.Interfaces;
+using System.Security.Claims;
 
 namespace Shop.Controllers
 {
@@ -11,12 +13,14 @@ namespace Shop.Controllers
     {
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IAdministratorServices _administrator;
-
+        private readonly UserManager<IdentityUser> _userManager;
         public AdministratorController(RoleManager<IdentityRole> roleManager,
-                                       IAdministratorServices administrator)
+                                       IAdministratorServices administrator,
+                                       UserManager<IdentityUser> userManager)
         {
             _roleManager = roleManager;
             _administrator = administrator;
+            _userManager = userManager;
         }
 
         [HttpPost("createRole")]
@@ -42,14 +46,21 @@ namespace Shop.Controllers
         [HttpPost("GetUsersWithRole")]
         public async Task<dynamic> ListRoles(string name)
         {
+            dynamic userData = _administrator.GetUserClaims();
+            if (userData == null) return BadRequest(userData.Data.Message);
 
-            //var user = await _userManager.GetUserAsync(User);
-            //if (user == null) return BadRequest();
-            //if (userRole == "SuperAdmin") return await _userManager.GetUsersInRoleAsync(name);
-            //if (userRole == "Admin")
-            //if (name == "SuperAdmin" || name == "Admin") return BadRequest("You are Not Allowed to Access this");
+            if (name == null) return BadRequest("No Role Specified");
+            var userRole = userData.Data.userRole;
 
-            return BadRequest("You are Not Allowed to Access this");
+            if(userRole == null) return BadRequest("User Not Logged In");
+            
+            if (userRole == "Admin")
+                    if (name == "SuperAdmin" || name == "Admin") 
+                        return BadRequest("You are Not Allowed to Access this");
+            
+            var Users = await _userManager.GetUsersInRoleAsync(name);
+
+            return Ok(Users);
         }
     }
 }
