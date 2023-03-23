@@ -14,9 +14,8 @@ namespace Shop.Models.DataModels
         [Required]
         [Column(TypeName = "decimal(10, 2)")]
         public double Price { get; set; }
-        public int Quantity { get; set; } = 0;
-        public bool Visiblity { get; set; } = false;
-        [Required]
+        public int Quantity { get; set; }
+        public bool Visiblity { get; set; } 
         public string? UploadedBy { get; set; }
     }
 }
