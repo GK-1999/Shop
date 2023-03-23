@@ -28,6 +28,8 @@ builder.Services.AddAuthentication(auth =>
     auth.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -41,6 +43,9 @@ builder.Services.AddAuthentication(auth =>
     };
 });
 
+//-----------------------------------------------------------//
+
+//-----------------------------------------------------------//
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -57,6 +62,10 @@ builder.Services.AddScoped<IAdministratorServices, AdministratorServices>();
 builder.Services.AddScoped<IAccountServices, AccountServices>();
 builder.Services.AddScoped<IProductServices,ProductServices>();
 
+
+
+// App Settings
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -67,6 +76,10 @@ if (app.Environment.IsDevelopment())
 }
 app.UseHttpsRedirection();
 
+//-----------------------------------------------------------//
+app.UseAuthentication();
+app.UseAuthorization();
+//-----------------------------------------------------------//
 
 app.MapControllers();
 
