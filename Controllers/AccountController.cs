@@ -13,13 +13,15 @@ namespace Shop.Controllers
     public class AccountController : ControllerBase
     {
         private IAccountServices _accountServices;
+        private IAdministratorServices _administrator;
         private IConfiguration _configuration;
-        public AccountController(IAccountServices accountServices, IConfiguration configuration)
+        public AccountController(IAccountServices accountServices, IConfiguration configuration, IAdministratorServices administrator)
         {
             _accountServices = accountServices;
             _configuration = configuration;
-    }
-        [HttpPost("CreateAdmin")]
+            _administrator = administrator;
+        }
+        [HttpPost("RegisterAdmin")]
         public async Task<IActionResult> CreateAdmin([FromBody] RegistrationModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -143,8 +145,6 @@ namespace Shop.Controllers
 
             var results = await _accountServices.LoginAsync(model);
 
-            //---------------------------------------------------------------------------------------//
-
             if (results.StatusCode == 200)
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -179,7 +179,7 @@ namespace Shop.Controllers
                     return BadRequest("Invalid Token");
                 }
             }
-            //---------------------------------------------------------------------------------------//
+
             return BadRequest(results);
         }
     }

@@ -29,22 +29,32 @@ namespace Shop.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
             if (model.Name == null) return BadRequest("Role Not Specified");
 
+            dynamic data = _administrator.GetUserClaims();
+
+            if (data == null) return BadRequest("No User Logged In");
+            if (data.Data.userRole != "SuperAdmin") return BadRequest("Permission Denied");
+
             if (await _roleManager.RoleExistsAsync(model.Name)) return BadRequest("Role Already Exists");
 
             var result = await _administrator.CreateRole(model);
-            if (result.Succeeded) return Ok("Role Created Sucessfully");
+            if (result.Succeeded) return Ok($"{model.Name} Role Created Sucessfully");
 
-            return BadRequest("Role Not Created");
+            return BadRequest(result.Errors);
         }
 
         [HttpGet("GetRoles")]
         public dynamic ViewRoles()
         {
+            dynamic data = _administrator.GetUserClaims();
+
+            if (data == null) return BadRequest("No User Logged In");
+            if (data.Data.userRole != "SuperAdmin") return BadRequest("Permission Denied");
+
             return _roleManager.Roles.ToList();
         }
 
         [HttpPost("GetUsersWithRole")]
-        public async Task<dynamic> ListRoles(string name)
+        public async Task<dynamic> ListRoleUsers(string name)
         {
             dynamic userData = _administrator.GetUserClaims();
             if (userData == null) return BadRequest(userData.Data.Message);

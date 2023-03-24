@@ -10,6 +10,7 @@ namespace Shop.Profiles
         {
             CreateMap<UserDetails, RegistrationModel>();
             CreateMap<Product , UpdateProduct>();
+            CreateMap<Product, ViewProducts>();
         }
     }
 }

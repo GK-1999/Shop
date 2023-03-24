@@ -27,6 +27,7 @@ namespace Shop.Controllers
             if(!ModelState.IsValid) return BadRequest(" Invalid Operation");
 
             var product = _product.UpdateProduct(model);
+
             if (product != null) return BadRequest("Product Not Updated");
 
             return Ok(model);
@@ -35,13 +36,23 @@ namespace Shop.Controllers
         [HttpPost("AddProduct")]
         public IActionResult addProduct([FromBody] Product model)
         {
-            if (!ModelState.IsValid) return BadRequest(" Invalid Operation");
+            if (!ModelState.IsValid) return BadRequest("Invalid Operation");
             
             var product = _product.AddProduct(model);
-
             if (product.IsCompleted) return Ok(product.Result.Message);
 
             return BadRequest("Product Not Added");
+        }
+
+        [HttpGet("GetAllProducts")]
+        public IActionResult GetAllProducts([FromBody] Product model)
+        {
+            if (!ModelState.IsValid) return BadRequest("Invalid Operation");
+            var products = _product.ViewAllProducts(); 
+
+            if(products.IsCompletedSuccessfully) return Ok(products.Result.Data);
+
+            return BadRequest(products.Result.Message);
         }
     }
 }

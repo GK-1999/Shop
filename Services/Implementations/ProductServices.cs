@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shop.DbContext;
@@ -13,7 +14,8 @@ namespace Shop.Services.Implementations
     public class ProductServices : IProductServices
     {
         private ShopDbContext _dbContext;
-        private IAdministratorServices _administrator; 
+        private IAdministratorServices _administrator;
+        private IMapper _mapper;
         public ProductServices(ShopDbContext dbContext, IAdministratorServices administrator)
         {
             _dbContext = dbContext;
@@ -30,33 +32,33 @@ namespace Shop.Services.Implementations
 
             model.UploadedBy = name;
             _dbContext.Products.Add(model);
-            //_dbContext.SaveChanges();
+            _dbContext.SaveChanges();
             return new response {Message = "Product Added Sucessfully", StatusCode = 200 };
         }
 
         public async Task<response> DeleteProductById(int id)
         {
             var product = _dbContext.Products.SingleOrDefault(x => x.ProductId == id);
-
-            //if (currentUser != product.UploadedBy)
-            //return new response { Message = $"No Such Product Found", StatusCode = 400 };
-
             if (product == null) return new response { Message = $"No Product Found with of Id : {id}", StatusCode = 400 };
-            
+
+            dynamic data = _administrator.GetUserClaims();
+            if (data == null) return new response { Message = "No User Logged In" , StatusCode = 400 };
+            if (data.Data.userName != product.UploadedBy) return new response { Message = $"No Such Product Found", StatusCode = 400 };
+
             _dbContext.Products.Remove(product);
             _dbContext.SaveChanges();
 
-            return new response { Message = $"Product Sucessfully Deleted " , StatusCode = 200 };
+            return new response { Message = $"{product.Name} Deleted Sucessfully " , StatusCode = 200 };
         }
 
         public async Task<response> DeleteProductByName(string name)
         {
             var product = _dbContext.Products.SingleOrDefault(x => x.Name == name);
-
-            //if (currentUser != product.UploadedBy)
-            //return new response { Message = $"No Such Product Found", StatusCode = 400 };
-
             if (product == null) return new response { Message = $"No Product Found with of Name : {name}", StatusCode = 400 };
+
+            dynamic data = _administrator.GetUserClaims();
+            if (data == null) return new response { Message = "No User Logged In", StatusCode = 400 };
+            if (data.Data.userName != product.UploadedBy) return new response { Message = $"No Such Product Found", StatusCode = 400 };
 
             _dbContext.Products.Remove(product);
             _dbContext.SaveChanges();
@@ -66,33 +68,41 @@ namespace Shop.Services.Implementations
 
         public async Task<response> UpdateProduct(UpdateProduct model)
         {
-            var loginDetails = _administrator.GetUserClaims();
-            dynamic data = loginDetails.Data;
-            var name = data.userName;
+            dynamic data = _administrator.GetUserClaims();
+            if (data == null) return new response { Message = "No User Logged In", StatusCode = 400 };
 
             var product = _dbContext.Products.FirstOrDefault(x => x.ProductId == model.ProductId);
-
-
-            if (product.UploadedBy != name) return new response { Message = "Invalid Operation", StatusCode = 400 };
             if (product == null) return new response { Message = "Product Not Found", StatusCode = 400 };
-            
-            if (model.Name == null) model.Name = product.Name;
-            if (model.Description == null) model.Description = product.Description;
-            if (model.Category == null) model.Category = product.Category;
-            if (model.Price == null) model.Price = product.Price;
-            if( model.Quantity == null) model.Quantity = product.Quantity;
 
+            if (data.Data.uesrName != product.UploadedBy) return new response { Message = "Invalid Operation", StatusCode = 400 };
 
-            _dbContext.Products.Update(model);
+            if (model.Name != null) product.Name = model.Name;
+            if (model.Description != null) product.Description = model.Description ;
+            if (model.Category != null) product.Category = model.Category;
+            if (model.Price != null) product.Price = model.Price;
+            if (model.Quantity != null) product.Quantity = model.Quantity;
+
+            _dbContext.Products.Update(product);
             _dbContext.SaveChanges();
 
             return new response {Message = "Product Updated Sucessfully" ,StatusCode = 200};
         }
 
-        public IEnumerable<ViewProducts> ViewAllProducts()
+        public async Task<response> ViewAllProducts()
         {
-            var products = _dbContext.Products.ToList();
-            return (IEnumerable<ViewProducts>)products;
+            dynamic data = _administrator.GetUserClaims();
+            if (data.StatusCode == 400) return new response { Message = data.Message };
+            var role = data.Data.userRole;
+            string? userName = data.Data.userName;
+            dynamic products = new ViewProducts();
+
+            if (role == "SuperAdmin") products = _dbContext.Products.ToList();
+            if (role == "Admin") products = _dbContext.Products.Where(x => x.UploadedBy == userName).ToListAsync();
+
+            //---------------------------------------------------------------------------------//
+            if(products.Result != null) return new response { StatusCode = 200,Data = new { products } };
+            //---------------------------------------------------------------------------------//
+            return new response { Message = "No Products Found" , StatusCode = 400, Data = new { products } };
         }
 
         public dynamic ViewProductByAdmin(string name)

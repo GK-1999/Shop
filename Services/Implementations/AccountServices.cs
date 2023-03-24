@@ -43,7 +43,6 @@ namespace Shop.Services.Implementations
             if (result.Succeeded)
             {
                 var Assignrole = await _userManager.AddToRoleAsync(IdentityUser, "Admin");
-
                 if (Assignrole.Succeeded) return new response { Message = "Admin Registration Sucessful", StatusCode = 200 };
             }
             return new response { Message = "Admin Registration Failed", StatusCode = 400 };

@@ -12,7 +12,7 @@ namespace Shop.Services.Interfaces
         Task<response> DeleteProductById(int id);
         Task<response> DeleteProductByName(string name);
 
-        IEnumerable<ViewProducts> ViewAllProducts();
+        Task<response> ViewAllProducts();
         dynamic ViewProductById(int Id);
         dynamic ViewProductByName(string name);
         dynamic ViewProductByAdmin(string name);
