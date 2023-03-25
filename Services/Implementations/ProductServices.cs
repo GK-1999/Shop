@@ -16,15 +16,19 @@ namespace Shop.Services.Implementations
         private ShopDbContext _dbContext;
         private IAdministratorServices _administrator;
         private IMapper _mapper;
+
+        dynamic data;
         public ProductServices(ShopDbContext dbContext, IAdministratorServices administrator)
         {
             _dbContext = dbContext;
             _administrator = administrator;
+
+
+            data = _administrator.GetUserClaims();
+
         }
         public async Task<response> AddProduct(Product model)
         {
-            var loginDetails = _administrator.GetUserClaims();
-            dynamic data = loginDetails.Data;
             var role = data.userRole;
             var name = data.userName;
 
@@ -41,7 +45,6 @@ namespace Shop.Services.Implementations
             var product = _dbContext.Products.SingleOrDefault(x => x.ProductId == id);
             if (product == null) return new response { Message = $"No Product Found with of Id : {id}", StatusCode = 400 };
 
-            dynamic data = _administrator.GetUserClaims();
             if (data == null) return new response { Message = "No User Logged In" , StatusCode = 400 };
             if (data.Data.userName != product.UploadedBy) return new response { Message = $"No Such Product Found", StatusCode = 400 };
 
@@ -88,27 +91,26 @@ namespace Shop.Services.Implementations
             return new response {Message = "Product Updated Sucessfully" ,StatusCode = 200};
         }
 
-        public async Task<response> ViewAllProducts()
+        public async Task<IList<Product>> ViewAllProducts()
         {
-            dynamic data = _administrator.GetUserClaims();
-            if (data.StatusCode == 400) return new response { Message = data.Message };
+            if (data.StatusCode == 400) return null;
             var role = data.Data.userRole;
             string? userName = data.Data.userName;
-            dynamic products = new ViewProducts();
+            IList<Product> products = null;
 
             if (role == "SuperAdmin") products = _dbContext.Products.ToList();
-            if (role == "Admin") products = _dbContext.Products.Where(x => x.UploadedBy == userName).ToListAsync();
+            if (role == "Admin") products = _dbContext.Products.Where(x => x.UploadedBy == userName).ToList();
 
             //---------------------------------------------------------------------------------//
-            if(products.Result != null) return new response { StatusCode = 200,Data = new { products } };
+            if(products.Count != 0) return products;
             //---------------------------------------------------------------------------------//
-            return new response { Message = "No Products Found" , StatusCode = 400, Data = new { products } };
+            return null;
         }
 
         public dynamic ViewProductByAdmin(string name)
         {
-            var products = _dbContext.Products.Where(x => x.UploadedBy == name).ToListAsync();
-            if (products == null) return new response { Message = "No Product Found for this Admin" };
+            var products = _dbContext.Products.Where(x => x.UploadedBy == name);
+            if (products.Count() == 0) return new response { Message = "No Product Found for this Admin" };
             return (IEnumerable<ViewProducts>)products;
         }
 

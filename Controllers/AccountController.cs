@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Shop.Controllers
 {
-    [Route("api/[controller]")]
+    //[Route("api/[controller]")]
     [ApiController]
     public class AccountController : ControllerBase
     {
@@ -28,7 +28,8 @@ namespace Shop.Controllers
 
             var result = await _accountServices.AdminRegistrationAsync(model);
 
-            if (result.StatusCode == 200) return Ok(result.Message);
+            if (result.StatusCode == 400) return Ok(result.Message);
+            
             return BadRequest(result.Message);
         }
 

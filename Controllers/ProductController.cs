@@ -50,9 +50,9 @@ namespace Shop.Controllers
             if (!ModelState.IsValid) return BadRequest("Invalid Operation");
             var products = _product.ViewAllProducts(); 
 
-            if(products.IsCompletedSuccessfully) return Ok(products.Result.Data);
+            if(products.IsCompletedSuccessfully) return Ok( new { products.Result });
 
-            return BadRequest(products.Result.Message);
+            return BadRequest("Error");
         }
     }
 }

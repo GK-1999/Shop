@@ -7,13 +7,17 @@ using System.Security.Claims;
 
 namespace Shop.Controllers
 {
-    [Route("api/[controller]")]
+    //[Route("api/[controller]")]
     [ApiController]
     public class AdministratorController : ControllerBase
     {
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IAdministratorServices _administrator;
         private readonly UserManager<IdentityUser> _userManager;
+
+
+        dynamic data;
+
         public AdministratorController(RoleManager<IdentityRole> roleManager,
                                        IAdministratorServices administrator,
                                        UserManager<IdentityUser> userManager)
@@ -21,6 +25,8 @@ namespace Shop.Controllers
             _roleManager = roleManager;
             _administrator = administrator;
             _userManager = userManager;
+
+            data = _administrator.GetUserClaims();
         }
 
         [HttpPost("createRole")]
@@ -45,7 +51,6 @@ namespace Shop.Controllers
         [HttpGet("GetRoles")]
         public dynamic ViewRoles()
         {
-            dynamic data = _administrator.GetUserClaims();
 
             if (data == null) return BadRequest("No User Logged In");
             if (data.Data.userRole != "SuperAdmin") return BadRequest("Permission Denied");

@@ -25,25 +25,27 @@ namespace Shop.Services.Implementations
 
         public async Task<response> AdminRegistrationAsync([FromBody] RegistrationModel model)
         {
-            if (model == null) return new response { Message = "No Data Received", StatusCode = 400 };
+            if (model == null) return null;
+                //return new response { Message = "No Data Received", StatusCode = 400 };
 
-            UserDetails IdentityUser = new UserDetails
-            {
-                UserName = model.UserName,
-                Email = model.EmailId,
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Address = model.Address,
-                City = model.City,
-                State = model.State,
-                PhoneNumber = model.PhoneNumber,
-                Pincode = model.Pincode,
-            };
-            var result = await _userManager.CreateAsync(IdentityUser, model.Password);
-            if (result.Succeeded)
-            {
-                var Assignrole = await _userManager.AddToRoleAsync(IdentityUser, "Admin");
-                if (Assignrole.Succeeded) return new response { Message = "Admin Registration Sucessful", StatusCode = 200 };
+                UserDetails IdentityUser = new UserDetails
+                {
+                    UserName = model.UserName,
+                    Email = model.EmailId,
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    Address = model.Address,
+                    City = model.City,
+                    State = model.State,
+                    PhoneNumber = model.PhoneNumber,
+                    Pincode = model.Pincode,
+                };
+                var result = await _userManager.CreateAsync(IdentityUser, model.Password);
+                if (result.Succeeded)
+                {
+                    var Assignrole = await _userManager.AddToRoleAsync(IdentityUser, "Admin");
+                    if (Assignrole.Succeeded)
+                    return new response { Message = "Admin Registration Sucessful", StatusCode = 200 };
             }
             return new response { Message = "Admin Registration Failed", StatusCode = 400 };
         }
@@ -54,6 +56,7 @@ namespace Shop.Services.Implementations
 
             var userExists = _userManager.Users.Any(u => u.UserName == model.UserName);
             if (userExists) return new response { Message = "User Already Exists", StatusCode = 400 };
+
             var emailExists = _userManager.Users.Any(u => u.Email == model.EmailId);
             if (emailExists) return new response { Message = "User with this EmailId Already Exists", StatusCode = 400 };
 
