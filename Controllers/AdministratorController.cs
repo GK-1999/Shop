@@ -15,8 +15,7 @@ namespace Shop.Controllers
         private readonly IAdministratorServices _administrator;
         private readonly UserManager<IdentityUser> _userManager;
 
-
-        dynamic data;
+        dynamic LoggedinUserdata;
 
         public AdministratorController(RoleManager<IdentityRole> roleManager,
                                        IAdministratorServices administrator,
@@ -26,7 +25,7 @@ namespace Shop.Controllers
             _administrator = administrator;
             _userManager = userManager;
 
-            data = _administrator.GetUserClaims();
+            LoggedinUserdata = _administrator.GetUserClaims();
         }
 
         [HttpPost("createRole")]
@@ -52,8 +51,8 @@ namespace Shop.Controllers
         public dynamic ViewRoles()
         {
 
-            if (data == null) return BadRequest("No User Logged In");
-            if (data.Data.userRole != "SuperAdmin") return BadRequest("Permission Denied");
+            if (LoggedinUserdata == null) return BadRequest("No User Logged In");
+            if (LoggedinUserdata.Data.userRole != "SuperAdmin") return BadRequest("Permission Denied");
 
             return _roleManager.Roles.ToList();
         }
@@ -61,11 +60,10 @@ namespace Shop.Controllers
         [HttpPost("GetUsersWithRole")]
         public async Task<dynamic> ListRoleUsers(string name)
         {
-            dynamic userData = _administrator.GetUserClaims();
-            if (userData == null) return BadRequest(userData.Data.Message);
+            if (LoggedinUserdata == null) return BadRequest(LoggedinUserdata.Data.Message);
 
             if (name == null) return BadRequest("No Role Specified");
-            var userRole = userData.Data.userRole;
+            var userRole = LoggedinUserdata.Data.userRole;
 
             if(userRole == null) return BadRequest("User Not Logged In");
             

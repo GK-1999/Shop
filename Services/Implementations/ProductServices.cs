@@ -15,14 +15,12 @@ namespace Shop.Services.Implementations
     {
         private ShopDbContext _dbContext;
         private IAdministratorServices _administrator;
-        private IMapper _mapper;
 
         dynamic data;
         public ProductServices(ShopDbContext dbContext, IAdministratorServices administrator)
         {
             _dbContext = dbContext;
             _administrator = administrator;
-
 
             data = _administrator.GetUserClaims();
 

@@ -13,12 +13,10 @@ namespace Shop.Services.Implementations
     public class AdministratorServices : IAdministratorServices
     {
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly UserManager<IdentityUser> _userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public AdministratorServices(RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager, IHttpContextAccessor httpContextAccessor)
+        public AdministratorServices(RoleManager<IdentityRole> roleManager, IHttpContextAccessor httpContextAccessor)
         {
             _roleManager = roleManager;
-            _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
         }
 

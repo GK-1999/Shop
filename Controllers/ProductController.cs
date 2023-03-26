@@ -14,17 +14,15 @@ namespace Shop.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductServices _product;
-        IMapper _mapper;
-        public ProductController(IMapper mapper, IProductServices product)
+        public ProductController(IProductServices product)
         {
-            _mapper = mapper;
             _product = product;
         }
 
         [HttpPut("UpdateProduct")]
         public IActionResult updateProduct([FromBody] UpdateProduct model) 
         {
-            if(!ModelState.IsValid) return BadRequest(" Invalid Operation");
+            if(!ModelState.IsValid) return BadRequest("Invalid Operation");
 
             var product = _product.UpdateProduct(model);
 

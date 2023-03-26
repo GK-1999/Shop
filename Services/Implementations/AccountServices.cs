@@ -91,7 +91,7 @@ namespace Shop.Services.Implementations
             var valid = await _userManager.CheckPasswordAsync(user, model.Password);
             if (!valid) return new response { Message = "Invalid Password", StatusCode = 400 };
             IList<string> roles = await _userManager.GetRolesAsync(user);
-
+            
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.UserName),

@@ -15,12 +15,14 @@ namespace Shop.Controllers
         private IAccountServices _accountServices;
         private IAdministratorServices _administrator;
         private IConfiguration _configuration;
+        
         public AccountController(IAccountServices accountServices, IConfiguration configuration, IAdministratorServices administrator)
         {
             _accountServices = accountServices;
             _configuration = configuration;
             _administrator = administrator;
         }
+
         [HttpPost("RegisterAdmin")]
         public async Task<IActionResult> CreateAdmin([FromBody] RegistrationModel model)
         {
