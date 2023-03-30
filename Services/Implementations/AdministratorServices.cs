@@ -29,17 +29,21 @@ namespace Shop.Services.Implementations
             return result;
         }
 
-        public response GetUserClaims()
+        public Dictionary<string,string> GetUserClaims()
         {
             var identity = _httpContextAccessor.HttpContext.User.Identity as ClaimsIdentity;
 
-            if (identity.Claims.Count() == 0) return new response { Message ="User Not LoggedIn" , StatusCode = 400};
+            if (identity.Claims.Count() == 0) return null ;
 
-            string userRole = identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role).Value;
-            string userName = identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name).Value;
-            string userEmail = identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email).Value;
+            var values = new Dictionary<string,string>
+            {
+                { "Name" , identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name).Value },
+                { "Email" , identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email).Value },
+                { "Roles", identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role).Value },
+                {"Permission", identity.FindFirst("IsAllowed").Value },
+            };
 
-            return new response {Message = "Claims Retrived Sucessfully" ,StatusCode = 200 , Data = new { userEmail, userName, userRole } };
+            return values;
         }
     }
 }

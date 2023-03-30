@@ -12,8 +12,8 @@ using Shop.DbContext;
 namespace Shop.Migrations
 {
     [DbContext(typeof(ShopDbContext))]
-    [Migration("20230308085948_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20230329094455_initial")]
+    partial class initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -278,7 +278,6 @@ namespace Shop.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UploadedBy")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("Visiblity")
@@ -315,8 +314,11 @@ namespace Shop.Migrations
                 {
                     b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
 
-                    b.Property<string>("EmailId")
+                    b.Property<string>("Address")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("City")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
@@ -330,8 +332,10 @@ namespace Shop.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Password")
-                        .IsRequired()
+                    b.Property<int>("Pincode")
+                        .HasColumnType("int");
+
+                    b.Property<string>("State")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasDiscriminator().HasValue("UserDetails");

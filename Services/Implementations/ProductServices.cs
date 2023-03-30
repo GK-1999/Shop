@@ -7,6 +7,7 @@ using Shop.Models.DataModels;
 using Shop.Models.Response;
 using Shop.Models.ViewModels;
 using Shop.Services.Interfaces;
+using System.Security.Claims;
 using System.Xml.Linq;
 
 namespace Shop.Services.Implementations
@@ -15,7 +16,6 @@ namespace Shop.Services.Implementations
     {
         private ShopDbContext _dbContext;
         private IAdministratorServices _administrator;
-        private IMapper _mapper;
         public ProductServices(ShopDbContext dbContext, IAdministratorServices administrator)
         {
             _dbContext = dbContext;
@@ -24,57 +24,58 @@ namespace Shop.Services.Implementations
         public async Task<response> AddProduct(Product model)
         {
             var loginDetails = _administrator.GetUserClaims();
-            dynamic data = loginDetails.Data;
-            var role = data.userRole;
-            var name = data.userName;
 
-            if(role != "Admin" && role != "SuperAdmin") return new response { Message = "User Not Allowed for this action", StatusCode = 400};
+            var role = ClaimsIdentity.DefaultRoleClaimType;
+            var name = ClaimsIdentity.DefaultNameClaimType;
+
+            if(role != "Admin" && role != "SuperAdmin") return new response { Message = "User Not Allowed for this action", IsSuccess = false};
 
             model.UploadedBy = name;
             _dbContext.Products.Add(model);
             _dbContext.SaveChanges();
-            return new response {Message = "Product Added Sucessfully", StatusCode = 200 };
+
+            return new response {Message = "Product Added Sucessfully", IsSuccess = true};
         }
 
         public async Task<response> DeleteProductById(int id)
         {
             var product = _dbContext.Products.SingleOrDefault(x => x.ProductId == id);
-            if (product == null) return new response { Message = $"No Product Found with of Id : {id}", StatusCode = 400 };
+            if (product == null) return new response { Message = $"No Product Found with of Id : {id}", IsSuccess = false };
 
             dynamic data = _administrator.GetUserClaims();
-            if (data == null) return new response { Message = "No User Logged In" , StatusCode = 400 };
-            if (data.Data.userName != product.UploadedBy) return new response { Message = $"No Such Product Found", StatusCode = 400 };
+            if (data == null) return new response { Message = "No User Logged In" , IsSuccess = false };
+            if (data.Data.userName != product.UploadedBy) return new response { Message = $"No Such Product Found", IsSuccess = false };
 
             _dbContext.Products.Remove(product);
             _dbContext.SaveChanges();
 
-            return new response { Message = $"{product.Name} Deleted Sucessfully " , StatusCode = 200 };
+            return new response { Message = $"{product.Name} Deleted Sucessfully " , IsSuccess = true };
         }
 
         public async Task<response> DeleteProductByName(string name)
         {
             var product = _dbContext.Products.SingleOrDefault(x => x.Name == name);
-            if (product == null) return new response { Message = $"No Product Found with of Name : {name}", StatusCode = 400 };
+            if (product == null) return new response { Message = $"No Product Found with of Name : {name}", IsSuccess = false };
 
             dynamic data = _administrator.GetUserClaims();
-            if (data == null) return new response { Message = "No User Logged In", StatusCode = 400 };
-            if (data.Data.userName != product.UploadedBy) return new response { Message = $"No Such Product Found", StatusCode = 400 };
+            if (data == null) return new response { Message = "No User Logged In", IsSuccess = false };
+            if (data.Data.userName != product.UploadedBy) return new response { Message = $"No Such Product Found", IsSuccess = false };
 
             _dbContext.Products.Remove(product);
             _dbContext.SaveChanges();
 
-            return new response { Message = $"Product Sucessfully Deleted ", StatusCode = 200 };
+            return new response { Message = $"Product Sucessfully Deleted ", IsSuccess = true };
         }
 
         public async Task<response> UpdateProduct(UpdateProduct model)
         {
             dynamic data = _administrator.GetUserClaims();
-            if (data == null) return new response { Message = "No User Logged In", StatusCode = 400 };
+            if (data == null) return new response { Message = "No User Logged In", IsSuccess = false };
 
             var product = _dbContext.Products.FirstOrDefault(x => x.ProductId == model.ProductId);
-            if (product == null) return new response { Message = "Product Not Found", StatusCode = 400 };
+            if (product == null) return new response { Message = "Product Not Found", IsSuccess = false };
 
-            if (data.Data.uesrName != product.UploadedBy) return new response { Message = "Invalid Operation", StatusCode = 400 };
+            if (data.Data.uesrName != product.UploadedBy) return new response { Message = "Invalid Operation", IsSuccess = false };
 
             if (model.Name != null) product.Name = model.Name;
             if (model.Description != null) product.Description = model.Description ;
@@ -85,24 +86,25 @@ namespace Shop.Services.Implementations
             _dbContext.Products.Update(product);
             _dbContext.SaveChanges();
 
-            return new response {Message = "Product Updated Sucessfully" ,StatusCode = 200};
+            return new response {Message = "Product Updated Sucessfully" , IsSuccess = true };
         }
 
         public async Task<response> ViewAllProducts()
         {
-            dynamic data = _administrator.GetUserClaims();
-            if (data.StatusCode == 400) return new response { Message = data.Message };
-            var role = data.Data.userRole;
-            string? userName = data.Data.userName;
+            var loginDetails = _administrator.GetUserClaims();
+
+            var role = ClaimsIdentity.DefaultRoleClaimType;
+            var userName = ClaimsIdentity.DefaultNameClaimType;
+            if (loginDetails.Count == 0) return new response { Message = loginDetails.Count.ToString()};
             dynamic products = new ViewProducts();
 
             if (role == "SuperAdmin") products = _dbContext.Products.ToList();
             if (role == "Admin") products = _dbContext.Products.Where(x => x.UploadedBy == userName).ToListAsync();
 
             //---------------------------------------------------------------------------------//
-            if(products.Result != null) return new response { StatusCode = 200,Data = new { products } };
+            if(products.Result != null) return new response { IsSuccess = true, Data = new { products } };
             //---------------------------------------------------------------------------------//
-            return new response { Message = "No Products Found" , StatusCode = 400, Data = new { products } };
+            return new response { Message = "No Products Found" , IsSuccess = false, Data = new { products } };
         }
 
         public dynamic ViewProductByAdmin(string name)

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Shop.Models.Response;
 using Shop.Models.ViewModels;
 using Shop.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
@@ -15,21 +16,23 @@ namespace Shop.Controllers
         private IAccountServices _accountServices;
         private IAdministratorServices _administrator;
         private IConfiguration _configuration;
+        private readonly dynamic data;
         public AccountController(IAccountServices accountServices, IConfiguration configuration, IAdministratorServices administrator)
         {
             _accountServices = accountServices;
             _configuration = configuration;
             _administrator = administrator;
+
+            data = _administrator.GetUserClaims();
         }
         [HttpPost("RegisterAdmin")]
         public async Task<IActionResult> CreateAdmin([FromBody] RegistrationModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-
             var result = await _accountServices.AdminRegistrationAsync(model);
 
-            if (result.StatusCode == 200) return Ok(result.Message);
-            return BadRequest(result.Message);
+            if (result != null) return Ok("Admin Registration Sucessful");
+            return BadRequest(result.Errors);
         }
 
         [HttpPost("RegisterUser")]
@@ -39,8 +42,8 @@ namespace Shop.Controllers
 
             var result = await _accountServices.UserRegistrationAsync(model);
 
-            if (result.StatusCode == 200) return Ok(result.Message);
-            return BadRequest(result);
+            if (result != null) return Ok("User Registration Sucessful");
+            return BadRequest(result.Errors);
         }
 
         [HttpPost("UserLogin")]
@@ -53,8 +56,9 @@ namespace Shop.Controllers
 
             //---------------------------------------------------------------------------------------//
 
-            if (results.StatusCode == 200)
+            if (results.IsSuccess)
             {
+                var token = results.Data.ToString();
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["AuthSettings:Key"]));
 
@@ -70,10 +74,7 @@ namespace Shop.Controllers
                 };
 
                 try
-                {
-                    dynamic receivedResponse = results.Data;
-                    var token = receivedResponse.token.ToString();
-                    
+                {   
                     var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
                     var identity = principal.Identity as ClaimsIdentity;
 
@@ -95,13 +96,11 @@ namespace Shop.Controllers
         public async Task<IActionResult> AdminLoginAsync([FromBody] LoginModel model)
         {
             if (!ModelState.IsValid) return BadRequest("Invalid Properties");
-
             var results = await _accountServices.LoginAsync(model);
-
-            //---------------------------------------------------------------------------------------//
-
-            if (results.StatusCode == 200)
+            
+            if (results.IsSuccess)
             {
+                var token = results.Data.ToString();
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["AuthSettings:Key"]));
                 
@@ -117,15 +116,17 @@ namespace Shop.Controllers
                 };
 
                 try
-                {
-                    dynamic receivedResponse = results.Data;
-                    var token = receivedResponse.token.ToString();
-                    
+                {   
                     var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
                     var identity = principal.Identity as ClaimsIdentity;
 
                     var userRole = identity?.FindFirst(ClaimTypes.Role)?.Value;
-                    if (userRole == "Admin") return Ok(results);
+                    var isAllowed = identity?.FindFirst("isAllowed")?.Value;
+                    if (userRole == "Admin")
+                    {
+                        if(isAllowed == "True") return Ok(results);
+                        return BadRequest("You are Not Authorized. Please Contact Administrator");
+                    }
                     return BadRequest("Invalid access for your role");
                 }
 
@@ -134,7 +135,6 @@ namespace Shop.Controllers
                     return BadRequest("Invalid Token");
                 }
             }
-            //---------------------------------------------------------------------------------------//
             return BadRequest(results);
         }
 
@@ -144,9 +144,9 @@ namespace Shop.Controllers
             if (!ModelState.IsValid) return BadRequest("Invalid Properties");
 
             var results = await _accountServices.LoginAsync(model);
-
-            if (results.StatusCode == 200)
+            if (results.IsSuccess)
             {
+                var token = results.Data.ToString();
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["AuthSettings:Key"]));
                 
@@ -163,9 +163,6 @@ namespace Shop.Controllers
 
                 try
                 {
-                    dynamic receivedResponse = results.Data;
-                    var token = receivedResponse.token.ToString();
-                    
                     var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
                     var identity = principal.Identity as ClaimsIdentity;
 
@@ -182,5 +179,23 @@ namespace Shop.Controllers
 
             return BadRequest(results);
         }
+
+        [HttpPost("EditPermission")]
+        public async Task<IActionResult> SetPermission(string username,bool updateStatus)
+        {
+            if (!ModelState.IsValid) return BadRequest("Invalid Properties");
+            if (data == null) return BadRequest("No User Logged In");
+            if (data["Roles"] != "SuperAdmin") return BadRequest("Permission Denied!");
+
+            var results = _accountServices.EditPermission(username, updateStatus);
+
+            if (results.Result.IsSuccess)
+            {
+                return Ok($"Permsiion Modified for username {username}");
+            }
+
+            return BadRequest(results);
+        }
+
     }
 }

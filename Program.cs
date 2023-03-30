@@ -58,8 +58,6 @@ builder.Services.AddScoped<IAdministratorServices, AdministratorServices>();
 builder.Services.AddScoped<IAccountServices, AccountServices>();
 builder.Services.AddScoped<IProductServices,ProductServices>();
 
-
-
 // App Settings
 
 var app = builder.Build();

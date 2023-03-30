@@ -14,6 +14,7 @@ namespace Shop.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IAdministratorServices _administrator;
         private readonly UserManager<IdentityUser> _userManager;
+        private dynamic data;
         public AdministratorController(RoleManager<IdentityRole> roleManager,
                                        IAdministratorServices administrator,
                                        UserManager<IdentityUser> userManager)
@@ -21,6 +22,8 @@ namespace Shop.Controllers
             _roleManager = roleManager;
             _administrator = administrator;
             _userManager = userManager;
+
+            data = _administrator.GetUserClaims();
         }
 
         [HttpPost("createRole")]
@@ -29,10 +32,8 @@ namespace Shop.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
             if (model.Name == null) return BadRequest("Role Not Specified");
 
-            dynamic data = _administrator.GetUserClaims();
-
-            if (data == null) return BadRequest("No User Logged In");
-            if (data.Data.userRole != "SuperAdmin") return BadRequest("Permission Denied");
+            if (data["Name"] == null) return BadRequest("No User Logged In");
+            if (data["Roles"] != "SuperAdmin") return BadRequest("Permission Denied");
 
             if (await _roleManager.RoleExistsAsync(model.Name)) return BadRequest("Role Already Exists");
 
@@ -45,22 +46,17 @@ namespace Shop.Controllers
         [HttpGet("GetRoles")]
         public dynamic ViewRoles()
         {
-            dynamic data = _administrator.GetUserClaims();
-
-            if (data == null) return BadRequest("No User Logged In");
-            if (data.Data.userRole != "SuperAdmin") return BadRequest("Permission Denied");
+            if (data["Name"].ToString() == null) return BadRequest("No User Logged In");
+            if (data["Roles"] != "SuperAdmin") return BadRequest("Permission Denied");
 
             return _roleManager.Roles.ToList();
         }
 
-        [HttpPost("GetUsersWithRole")]
+        [HttpGet("GetUsersWithRole")]
         public async Task<dynamic> ListRoleUsers(string name)
         {
-            dynamic userData = _administrator.GetUserClaims();
-            if (userData == null) return BadRequest(userData.Data.Message);
-
-            if (name == null) return BadRequest("No Role Specified");
-            var userRole = userData.Data.userRole;
+            if (data["Name"] == "") return BadRequest("No Role Specified");
+            var userRole = data["Roles"];
 
             if(userRole == null) return BadRequest("User Not Logged In");
             

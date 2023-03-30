@@ -1,0 +1,20 @@
+// SuperAdmin Login Details
+{
+  "userName": "SuperAdmin",
+  "emailId": "SuperAdmin@example.com",
+  "password": "Superadmin@123",
+}
+
+// Admin Login Details
+{
+  "userName": "Admin",
+  "emailId": "Admin@example.com",
+  "password": "Admin@123"
+}
+
+// User Login Details
+{
+  "userName": "User",
+  "emailId": "User@example.com",
+  "password": "User@123"
+}

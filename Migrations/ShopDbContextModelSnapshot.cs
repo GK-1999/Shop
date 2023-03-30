@@ -276,7 +276,6 @@ namespace Shop.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UploadedBy")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("Visiblity")

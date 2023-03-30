@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Shop.Models.DataModels;
 
 namespace Shop.DbContext
 {
-    public class ShopDbContext : IdentityDbContext
+    public class ShopDbContext : IdentityDbContext<IdentityUser>
     {
         public ShopDbContext(DbContextOptions<ShopDbContext> options) : base(options)
         {
@@ -15,6 +16,5 @@ namespace Shop.DbContext
         public DbSet<UserDetails> UserDetails { get; set; }
         public DbSet<Cart> Cart { get; set; }
         public DbSet<PurchaseHistory> PurchaseHistory { get; set; }
-
     }
 }
