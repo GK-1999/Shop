@@ -37,10 +37,10 @@ namespace Shop.Services.Implementations
 
             var values = new Dictionary<string,string>
             {
-                { "Name" , identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name).Value },
+                { "username" , identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name).Value },
                 { "Email" , identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email).Value },
                 { "Roles", identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role).Value },
-                {"Permission", identity.FindFirst("IsAllowed").Value },
+                { "Permission", identity.FindFirst("IsAllowed").Value },
             };
 
             return values;

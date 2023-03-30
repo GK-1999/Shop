@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Shop.Models.DataModels;
+using Shop.Models.Response;
 using Shop.Models.ViewModels;
 using Shop.Services.Interfaces;
 
@@ -34,25 +35,31 @@ namespace Shop.Controllers
         }
 
         [HttpPost("AddProduct")]
-        public IActionResult addProduct([FromBody] Product model)
+        public IActionResult addProduct([FromBody] IList<Product> model)
         {
             if (!ModelState.IsValid) return BadRequest("Invalid Operation");
-            
-            var product = _product.AddProduct(model);
-            if (product.IsCompleted) return Ok(product.Result.Message);
+            var flag = false;
+            dynamic result = "";
+
+            foreach (var product in model)
+            {
+                result = _product.AddProduct(product);
+                if (result.Result.IsSuccess) flag = true;
+                if (!flag) break;
+            }
+            if(flag) return Ok(result.Result);
 
             return BadRequest("Product Not Added");
         }
 
         [HttpGet("GetAllProducts")]
-        public IActionResult GetAllProducts([FromBody] Product model)
+        public IActionResult GetAllProducts()
         {
-            if (!ModelState.IsValid) return BadRequest("Invalid Operation");
             var products = _product.ViewAllProducts(); 
 
             if(products.IsCompletedSuccessfully) return Ok(products.Result.Data);
 
-            return BadRequest(products.Result.Message);
+            return BadRequest(products.Result);
         }
     }
 }
