@@ -194,7 +194,7 @@ namespace Shop.Controllers
                 return Ok($"Permsiion Modified for username {username}");
             }
 
-            return BadRequest(results);
+            return BadRequest(results.Result.Message);
         }
 
     }
