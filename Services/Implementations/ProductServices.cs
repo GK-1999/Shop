@@ -26,17 +26,60 @@ namespace Shop.Services.Implementations
         public async Task<response> AddProduct(Product model)
         {
             if (loginDetails == null) return new response { Message = "No user Logged In", IsSuccess = false };
-            
+
             var role = loginDetails["Roles"];
             var name = loginDetails["username"];
 
-            if(role != "Admin" && role != "SuperAdmin") return new response { Message = "User Not Allowed for this action", IsSuccess = false};
+            if (role != "Admin" && role != "SuperAdmin") return new response { Message = "User Not Allowed for this action", IsSuccess = false };
+
+            var product = _dbContext.Products.FirstOrDefault(x => x.Name == model.Name);
+            if (product != null) { return new response { Message = $"{model.Name} is Already Present", IsSuccess = false }; }
 
             model.UploadedBy = name;
             _dbContext.Products.Add(model);
             _dbContext.SaveChanges();
 
-            return new response {Message = "Product Added Sucessfully", IsSuccess = true};
+            return new response { Message = $"{model.Name} Added Sucessfully", IsSuccess = true };
+        }
+
+        public async Task<response> AddItems(CartItem cartItems)
+        {
+            if (cartItems == null) return new response { Message = "No Data Received", IsSuccess = false };
+
+            if (loginDetails == null) return new response { Message = "No user Logged In", IsSuccess = false };
+
+            string name = loginDetails["username"];
+
+            var product = _dbContext.Products.FirstOrDefault(x => x.Name == cartItems.ProductName);
+            if (product == null) return new response { Message = "No Such Product Found", IsSuccess = false };
+
+            var cartProduct = _dbContext.Cart.FirstOrDefault(x => 
+            (x.ProductName == cartItems.ProductName) && (x.UserName == name));
+            if (cartProduct != null) { return new response { Message = $"{cartItems.ProductName} is Already Present in Your Cart", IsSuccess = false }; }
+
+            var addItem = new Cart();
+
+            addItem.UserName = name;
+            addItem.ProductName = product.Name;
+            addItem.ProductId = product.ProductId;
+            addItem.Quantity = cartItems.Quantity;
+            addItem.Status = Status.Added;
+
+            _dbContext.Cart.Add(addItem);
+            _dbContext.SaveChanges();
+            return new response { Message = $"{cartItems.ProductName} Added Sucessfully in Your Cart ", IsSuccess = true };
+        }
+
+        public async Task<response> UserCart() 
+        {
+            if (loginDetails == null) return new response { Message = "No user Logged In", IsSuccess = false };
+
+            string name = loginDetails["username"];
+
+            var cartProduct = _dbContext.Cart.Where(x => x.UserName == name).ToList();
+            if (cartProduct.Capacity > 0) return new response { IsSuccess = true , Data = cartProduct};
+
+            return new response { Message =  "Cart is Empty", IsSuccess = false };
         }
 
         public async Task<response> DeleteProductById(int id)
@@ -51,7 +94,7 @@ namespace Shop.Services.Implementations
             _dbContext.Products.Remove(product);
             _dbContext.SaveChanges();
 
-            return new response { Message = $"{product.Name} Deleted Sucessfully " , IsSuccess = true };
+            return new response { Message = $"{product.Name} Deleted Sucessfully ", IsSuccess = true };
         }
 
         public async Task<response> DeleteProductByName(string name)
@@ -78,7 +121,7 @@ namespace Shop.Services.Implementations
             if (loginDetails["username"] != product.UploadedBy) return new response { Message = "Invalid Operation", IsSuccess = false };
 
             if (model.Name != null) product.Name = model.Name;
-            if (model.Description != null) product.Description = model.Description ;
+            if (model.Description != null) product.Description = model.Description;
             if (model.Category != null) product.Category = model.Category;
             if (model.Price != null) product.Price = model.Price;
             if (model.Quantity != null) product.Quantity = model.Quantity;
@@ -86,7 +129,7 @@ namespace Shop.Services.Implementations
             _dbContext.Products.Update(product);
             _dbContext.SaveChanges();
 
-            return new response {Message = "Product Updated Sucessfully" , IsSuccess = true };
+            return new response { Message = "Product Updated Sucessfully", IsSuccess = true };
         }
 
         public async Task<response> ViewAllProducts()
@@ -102,9 +145,9 @@ namespace Shop.Services.Implementations
             if (role == "Admin") products = _dbContext.Products.Where(x => x.UploadedBy == userName).ToListAsync();
 
             //---------------------------------------------------------------------------------//
-            if(products != null) return new response { IsSuccess = true, Data = new { products } };
+            if (products != null) return new response { IsSuccess = true, Data = new { products } };
             //---------------------------------------------------------------------------------//
-            return new response { Message = "No Products Found" , IsSuccess = false, Data = new { products } };
+            return new response { Message = "No Products Found", IsSuccess = false, Data = new { products } };
         }
 
         public dynamic ViewProductByAdmin(string name)
@@ -121,7 +164,7 @@ namespace Shop.Services.Implementations
             return (IEnumerable<ViewProducts>)products;
         }
 
-        public  dynamic ViewProductById(int Id)
+        public dynamic ViewProductById(int Id)
         {
             var productDetails = _dbContext.Products.FirstOrDefault(x => x.ProductId == Id);
 
@@ -134,7 +177,7 @@ namespace Shop.Services.Implementations
             product.Category = productDetails.Category;
             product.Price = productDetails.Price;
             product.Quantity = productDetails.Quantity;
-            product.Visiblity= productDetails.Visiblity;
+            product.Visiblity = productDetails.Visiblity;
 
             return product;
         }
@@ -143,7 +186,7 @@ namespace Shop.Services.Implementations
         {
             var products = _dbContext.Products.Where(x => x.Name == name).ToListAsync();
             if (products == null) return new response { Message = "No Product Found with this name" };
-            return (IEnumerable<ViewProducts>)products;            
+            return (IEnumerable<ViewProducts>)products;
         }
     }
 }

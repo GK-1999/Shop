@@ -1,16 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shop.DbContext;
 using Shop.Models.DataModels;
 using Shop.Models.Response;
 using Shop.Models.ViewModels;
 using Shop.Services.Interfaces;
-using System.Collections.Immutable;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
 
@@ -19,7 +15,6 @@ namespace Shop.Services.Implementations
     public class AccountServices : IAccountServices
     {
         private UserManager<IdentityUser> _userManager;
-        private ShopDbContext _dbContext;
         private IConfiguration _configuration;
 
         public AccountServices(UserManager<IdentityUser> userManager,
@@ -27,17 +22,16 @@ namespace Shop.Services.Implementations
         {
             _userManager = userManager;
             _configuration = configuration;
-            _dbContext = dbContext;
         }
 
-        public async Task<IdentityResult?> AdminRegistrationAsync([FromBody] RegistrationModel model)
+        public async Task<response?> AdminRegistrationAsync([FromBody] RegistrationModel model)
         {
-            if (model == null) return null;
+            if (model == null) return new response { Message = "No data Received" , IsSuccess = false};
 
             var userExists = _userManager.Users.Any(u => u.UserName == model.UserName);
-            if (userExists) return null;
+            if (userExists) return new response { Message = "Username already Present , Please try another username", IsSuccess = false };
             var emailExists = _userManager.Users.Any(u => u.Email == model.EmailId);
-            if (emailExists) return null;
+            if (emailExists) return new response { Message = "User with this EmailId already exists", IsSuccess = false };
 
             UserDetails user = new UserDetails
             {
@@ -58,19 +52,19 @@ namespace Shop.Services.Implementations
                 if (await _userManager.IsInRoleAsync(user, "Admin")) return null;
 
                 var Assignrole = await _userManager.AddToRoleAsync(user, "Admin");
-                if (Assignrole.Succeeded) return result;
+                if (Assignrole.Succeeded) return new response { Message = "Admin Created", IsSuccess = true , Data = result };
             }
-            return (IdentityResult?)result.Errors;
+            return new response { Message = "Admin Registration Failed", IsSuccess = false, Data = result };
         }
 
-        public async Task<IdentityResult?> UserRegistrationAsync([FromBody] RegistrationModel model)
+        public async Task<response?> UserRegistrationAsync([FromBody] RegistrationModel model)
         {
-            if (model == null) return null;
+            if (model == null) return new response { Message = "No data Received", IsSuccess = false };
 
             var userExists = _userManager.Users.Any(u => u.UserName == model.UserName);
-            if (userExists) return null;
+            if (userExists) return new response { Message = "Username already Present , Please try another username", IsSuccess = false };
             var emailExists = _userManager.Users.Any(u => u.Email == model.EmailId);
-            if (emailExists) return null;
+            if (emailExists) return new response { Message = "User with this EmailId already exists", IsSuccess = false };
 
             UserDetails user = new UserDetails
             {
@@ -92,9 +86,9 @@ namespace Shop.Services.Implementations
                 if (await _userManager.IsInRoleAsync(user, "User")) return null;
 
                 var Assignrole = await _userManager.AddToRoleAsync(user, "User");
-                if (Assignrole.Succeeded) return result;
+                if (Assignrole.Succeeded) return new response { Message = "User Created Sucessfully", IsSuccess = true, Data = result };
             }
-            return (IdentityResult?)result.Errors;
+            return new response { Message = "User Registration Failed", IsSuccess = false, Data = result };
         }
 
         public async Task<response> LoginAsync(LoginModel model)
@@ -102,7 +96,7 @@ namespace Shop.Services.Implementations
             var user = await _userManager.FindByNameAsync(model.UserName);
             if (user == null) return new response { Message = "Invalid Username / EmailId", IsSuccess = false };
 
-            UserDetails details = (UserDetails)user;
+            UserDetails details = user as UserDetails;
 
             if (!await _userManager.CheckPasswordAsync(user, model.Password)) return new response{Message = "Invalid Password" , IsSuccess = false};
             var roles = await _userManager.GetRolesAsync(user);
@@ -134,7 +128,7 @@ namespace Shop.Services.Implementations
         public async Task<response> EditPermission(string username,bool updateStatus)
         {
             var user = _userManager.Users.FirstOrDefault(u => u.UserName == username);
-            UserDetails userProperties = (UserDetails)user;
+            UserDetails? userProperties = user as UserDetails;
 
             if (userProperties.IsAllowed != updateStatus)
             {
@@ -143,7 +137,7 @@ namespace Shop.Services.Implementations
                 var result = await _userManager.UpdateAsync(userProperties);
 
                 if (result.Succeeded) return new response { Message = "Sucess", IsSuccess = true, Data = result };
-                return new response{ Message = "Failed", IsSuccess = false, Data = result.Errors };
+                return new response{ Message = "Failed", IsSuccess = false, Data = result };
             }
             return new response
             {

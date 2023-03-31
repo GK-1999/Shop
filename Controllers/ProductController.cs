@@ -6,10 +6,11 @@ using Shop.Models.DataModels;
 using Shop.Models.Response;
 using Shop.Models.ViewModels;
 using Shop.Services.Interfaces;
+using System.Collections.Generic;
 
 namespace Shop.Controllers
 {
-    [Route("api/[controller]")]
+    //[Route("api/[controller]")]
     [ApiController]
 
     public class ProductController : ControllerBase
@@ -40,16 +41,18 @@ namespace Shop.Controllers
             if (!ModelState.IsValid) return BadRequest("Invalid Operation");
             var flag = false;
             dynamic result = "";
+            var count = 0;
+            List<string> ProductStatus = new List<string>();
 
             foreach (var product in model)
             {
                 result = _product.AddProduct(product);
-                if (result.Result.IsSuccess) flag = true;
-                if (!flag) break;
+                count += 1;
+                ProductStatus.Add($"{count} : {result.Result.Message}");
             }
-            if(flag) return Ok(result.Result);
+            if(count > 0) return Ok(ProductStatus);
 
-            return BadRequest("Product Not Added");
+            return BadRequest("Products Not Added");
         }
 
         [HttpGet("GetAllProducts")]
@@ -60,6 +63,43 @@ namespace Shop.Controllers
             if(products.IsCompletedSuccessfully) return Ok(products.Result.Data);
 
             return BadRequest(products.Result);
+        }
+
+        [HttpPost("AddToCart")]
+        public async Task<IActionResult> AddToCart(IList<CartItem> model)
+        {
+            if (!ModelState.IsValid) return BadRequest("Invalid Operation");
+            //--------------------------------------------------------------------------//
+            
+            dynamic result = "";
+            var count = 0;
+            List<string> ItemStatus = new List<string>();
+
+            foreach (var item in model)
+            {
+                result = _product.AddItems(item);
+                count += 1;
+                ItemStatus.Add($"{count} : {result.Result.Message}");
+            }
+            if (count > 0) return Ok(ItemStatus);
+            //--------------------------------------------------------------------------//
+
+
+            if (result.Result.IsSuccess) return Ok(result);
+
+            return BadRequest(result.Result);
+        }
+
+        [HttpGet("GetCart")]
+        public IActionResult GetCart() 
+        {
+            if (!ModelState.IsValid) return BadRequest("Invalid Operation");
+
+            var result = _product.UserCart();
+
+            if (result.Result.IsSuccess) return Ok(result.Result.Data);
+
+            return BadRequest(result.Result);
         }
     }
 }

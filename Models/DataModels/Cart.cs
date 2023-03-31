@@ -7,12 +7,11 @@ namespace Shop.Models.DataModels
     {
         [Key]
         public int Id { get; set; }
-        [Required]
+        public string? ProductName { get; set; }
         public int ProductId { get; set; }
-        [ForeignKey("Id")]
-        public string? UserId { get; set; }
+        public string? UserName { get; set; }
         public int Quantity { get; set; }
         public Status Status { get; set; }
     }
-    public enum Status { Added, Purchased }
+    public enum Status { Added, Purchased}
 }

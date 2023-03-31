@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace Shop.Controllers
 {
-    [Route("api/[controller]")]
+    //[Route("api/[controller]")]
     [ApiController]
     public class AdministratorController : ControllerBase
     {
@@ -26,7 +26,7 @@ namespace Shop.Controllers
             data = _administrator.GetUserClaims();
         }
 
-        [HttpPost("createRole")]
+        [HttpPost("CreateRole")]
         public async Task<IActionResult> CreateRole([FromBody] RoleModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

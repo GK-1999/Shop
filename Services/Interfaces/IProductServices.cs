@@ -17,5 +17,8 @@ namespace Shop.Services.Interfaces
         dynamic ViewProductByName(string name);
         dynamic ViewProductByAdmin(string name);
         dynamic ViewProductByCategory(string category);
+
+        Task<response> AddItems(CartItem cartItems);
+        Task<response> UserCart();
     }
 }
