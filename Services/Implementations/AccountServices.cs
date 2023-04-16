@@ -18,7 +18,7 @@ namespace Shop.Services.Implementations
         private IConfiguration _configuration;
 
         public AccountServices(UserManager<IdentityUser> userManager,
-                               IConfiguration configuration, ShopDbContext dbContext,IAdministratorServices administrator)
+                               IConfiguration configuration)
         {
             _userManager = userManager;
             _configuration = configuration;

@@ -20,5 +20,8 @@ namespace Shop.Services.Interfaces
 
         Task<response> AddItems(CartItem cartItems);
         Task<response> UserCart();
+        Task<response> DeleteFromCart(int id);
+
+        Task<response> Purchase();
     }
 }

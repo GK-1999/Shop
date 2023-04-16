@@ -11,9 +11,6 @@ using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//AutoMapper
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
 // Add services to the container.
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(option =>
 {

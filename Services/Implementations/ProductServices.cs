@@ -7,6 +7,7 @@ using Shop.Models.DataModels;
 using Shop.Models.Response;
 using Shop.Models.ViewModels;
 using Shop.Services.Interfaces;
+using System.Linq;
 using System.Security.Claims;
 using System.Xml.Linq;
 
@@ -53,7 +54,7 @@ namespace Shop.Services.Implementations
             var product = _dbContext.Products.FirstOrDefault(x => x.Name == cartItems.ProductName);
             if (product == null) return new response { Message = "No Such Product Found", IsSuccess = false };
 
-            var cartProduct = _dbContext.Cart.FirstOrDefault(x => 
+            var cartProduct = _dbContext.Cart.FirstOrDefault(x =>
             (x.ProductName == cartItems.ProductName) && (x.UserName == name));
             if (cartProduct != null) { return new response { Message = $"{cartItems.ProductName} is Already Present in Your Cart", IsSuccess = false }; }
 
@@ -63,6 +64,7 @@ namespace Shop.Services.Implementations
             addItem.ProductName = product.Name;
             addItem.ProductId = product.ProductId;
             addItem.Quantity = cartItems.Quantity;
+            addItem.Price = product.Price;
             addItem.Status = Status.Added;
 
             _dbContext.Cart.Add(addItem);
@@ -70,16 +72,16 @@ namespace Shop.Services.Implementations
             return new response { Message = $"{cartItems.ProductName} Added Sucessfully in Your Cart ", IsSuccess = true };
         }
 
-        public async Task<response> UserCart() 
+        public async Task<response> UserCart()
         {
             if (loginDetails == null) return new response { Message = "No user Logged In", IsSuccess = false };
 
             string name = loginDetails["username"];
 
             var cartProduct = _dbContext.Cart.Where(x => x.UserName == name).ToList();
-            if (cartProduct.Capacity > 0) return new response { IsSuccess = true , Data = cartProduct};
+            if (cartProduct.Capacity > 0) return new response { IsSuccess = true, Data = cartProduct };
 
-            return new response { Message =  "Cart is Empty", IsSuccess = false };
+            return new response { Message = "Cart is Empty", IsSuccess = false };
         }
 
         public async Task<response> DeleteProductById(int id)
@@ -187,6 +189,60 @@ namespace Shop.Services.Implementations
             var products = _dbContext.Products.Where(x => x.Name == name).ToListAsync();
             if (products == null) return new response { Message = "No Product Found with this name" };
             return (IEnumerable<ViewProducts>)products;
+        }
+
+        public async Task<response> DeleteFromCart(int id)
+        {
+            if (loginDetails == null) return new response { Message = "No user Logged In", IsSuccess = false };
+            string username = loginDetails["username"];
+            var item = _dbContext.Cart.FirstOrDefault(x => (x.ProductId == id) && (x.UserName == username));
+            if (item == null) return new response { Message = $"No Product Found with of Id : {id}", IsSuccess = false };
+
+            _dbContext.Cart.Remove(item);
+            _dbContext.SaveChanges();
+
+            return new response { Message = $"{item.ProductName} Removed From Cart", IsSuccess = true };
+        }
+
+        public async Task<response> Purchase()
+        {
+            if (loginDetails == null) return new response { Message = "No user Logged In", IsSuccess = false };
+
+            string name = loginDetails["username"];
+
+            var product = _dbContext.Cart.Where(x => x.UserName == name).ToList();
+            if (product.Count == 0) return new response { Message = "No Products Found", IsSuccess = false };
+
+            var lastOrderId = _dbContext.ProductPurchaseHistory.OrderByDescending(x => x.OrderId).Select(x => x.OrderId).FirstOrDefault();
+            int orderId = lastOrderId + 1;
+
+            List<ProductPurchaseHistory> itemList = new List<ProductPurchaseHistory>();
+
+            foreach (var item in product)
+            {
+                var Prd = _dbContext.Products.SingleOrDefault(x => x.ProductId == item.ProductId);
+
+                if (item.Quantity <= Prd.Quantity)
+                {
+                    ProductPurchaseHistory PurchaseItem = new ProductPurchaseHistory();
+                    PurchaseItem.OrderId = orderId;
+                    PurchaseItem.ProductId = item.ProductId;
+                    PurchaseItem.ProductName = item.ProductName;
+                    PurchaseItem.OrderDate = DateTime.Now;
+                    PurchaseItem.Price = item.Price;
+                    PurchaseItem.Quantity = item.Quantity;
+                    PurchaseItem.TotalPrice = PurchaseItem.Price * PurchaseItem.Quantity;
+                    Prd.Quantity -= PurchaseItem.Quantity;
+
+                    _dbContext.ProductPurchaseHistory.Add(PurchaseItem);
+                    _dbContext.Products.Update(Prd);
+                    _dbContext.Cart.Remove(item);
+                    _dbContext.SaveChanges();
+
+                    itemList.Add(PurchaseItem);
+                }
+            }
+            return new response { Data = itemList, IsSuccess = true };
         }
     }
 }

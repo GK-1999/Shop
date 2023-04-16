@@ -16,23 +16,9 @@ namespace Shop.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductServices _product;
-        IMapper _mapper;
-        public ProductController(IMapper mapper, IProductServices product)
+        public ProductController(IProductServices product)
         {
-            _mapper = mapper;
             _product = product;
-        }
-
-        [HttpPut("UpdateProduct")]
-        public IActionResult updateProduct([FromBody] UpdateProduct model) 
-        {
-            if(!ModelState.IsValid) return BadRequest(" Invalid Operation");
-
-            var product = _product.UpdateProduct(model);
-
-            if (product != null) return BadRequest("Product Not Updated");
-
-            return Ok(model);
         }
 
         [HttpPost("AddProduct")]
@@ -50,9 +36,20 @@ namespace Shop.Controllers
                 count += 1;
                 ProductStatus.Add($"{count} : {result.Result.Message}");
             }
-            if(count > 0) return Ok(ProductStatus);
-
+            if (count > 0) return Ok(ProductStatus);
             return BadRequest("Products Not Added");
+        }
+
+        [HttpPut("UpdateProduct")]
+        public IActionResult updateProduct([FromBody] UpdateProduct model) 
+        {
+            if(!ModelState.IsValid) return BadRequest(" Invalid Operation");
+
+            var product = _product.UpdateProduct(model);
+
+            if (product != null) return BadRequest("Product Not Updated");
+
+            return Ok(model);
         }
 
         [HttpGet("GetAllProducts")]
@@ -69,8 +66,6 @@ namespace Shop.Controllers
         public async Task<IActionResult> AddToCart(IList<CartItem> model)
         {
             if (!ModelState.IsValid) return BadRequest("Invalid Operation");
-            //--------------------------------------------------------------------------//
-            
             dynamic result = "";
             var count = 0;
             List<string> ItemStatus = new List<string>();
@@ -82,23 +77,33 @@ namespace Shop.Controllers
                 ItemStatus.Add($"{count} : {result.Result.Message}");
             }
             if (count > 0) return Ok(ItemStatus);
-            //--------------------------------------------------------------------------//
-
-
-            if (result.Result.IsSuccess) return Ok(result);
-
             return BadRequest(result.Result);
         }
 
-        [HttpGet("GetCart")]
-        public IActionResult GetCart() 
+        [HttpPost("DeleteItemFromCart")]
+        public IActionResult RemoveFromCart(int id)
         {
             if (!ModelState.IsValid) return BadRequest("Invalid Operation");
-
-            var result = _product.UserCart();
-
+            var result = _product.DeleteFromCart(id);
             if (result.Result.IsSuccess) return Ok(result.Result.Data);
+            return BadRequest(result.Result);
+        }
+        
+        [HttpGet("GetCart")]
+        public IActionResult GetCart()
+        {
+            if (!ModelState.IsValid) return BadRequest("Invalid Operation");
+            var result = _product.UserCart();
+            if (result.Result.IsSuccess) return Ok(result.Result.Data);
+            return BadRequest(result.Result);
+        }
 
+        [HttpPost("Purchase")]
+        public IActionResult PurchaseProducts()
+        {
+            if (!ModelState.IsValid) return BadRequest("Invalid Operation");
+            var result = _product.Purchase();
+            if (result.Result.IsSuccess) return Ok(result.Result.Data);
             return BadRequest(result.Result);
         }
     }
